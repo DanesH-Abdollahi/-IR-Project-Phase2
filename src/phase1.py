@@ -50,8 +50,8 @@ def inverted_index_construction(data, normalizer, tokenizer, lemmetizer, stopwor
 
 
     # Write inverted index to file
-    with open("inverted_index.json", "w") as file:
-        json.dump(sorted_inverted_index, file, indent=4)
+    # with open("inverted_index.json", "w") as file:
+    #     json.dump(sorted_inverted_index, file, indent=4)
 
     return sorted_inverted_index
 
