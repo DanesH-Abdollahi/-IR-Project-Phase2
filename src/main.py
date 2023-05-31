@@ -54,6 +54,7 @@ with open("inverted_index.json", "r") as file:
     inverted_index = json.load(file)
 
 # Add tf-idf to inverted index
+document_norms = {}
 N = int(list(data.keys())[-1])  # Number of documents
 for token in inverted_index:
     n_t = len(inverted_index[token]) - 1  # Number of documents containing token
@@ -64,6 +65,11 @@ for token in inverted_index:
             ]  # Frequency of token in document
             tf_idf = (1 + log10(f_t_d)) * log10(N / n_t)
             inverted_index[token][doc_id]["tf-idf"] = tf_idf
+
+            if doc_id not in document_norms:
+                document_norms[doc_id] = tf_idf**2
+            else:
+                document_norms[doc_id] += tf_idf**2
 
 
 # Query Processing
@@ -90,6 +96,6 @@ for token in query_vector:
 
 total_abs = total_abs**0.5
 
-# Normalize query vector
+# Normalize the query vector
 for token in query_vector:
     query_vector[token] /= total_abs
