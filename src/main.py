@@ -53,6 +53,21 @@ with open("../IR_data_news_12k.json", "r") as file:
 with open("inverted_index.json", "r") as file:
     inverted_index = json.load(file)
 
+
+tokens_dict = dict()
+for id in data:
+    # tmp_tokens = []
+    tmp = normalizer.normalize(data[id]["content"])  # normalize text
+    tmp = tokenizer.tokenize(tmp)  # list of tokens
+
+    tmp = [
+        token for token in tmp if token not in stopwords
+    ]  # remove stopwords
+    tmp = [lemmetizer.lemmatize(token) for token in tmp]
+
+    tokens_dict[id] = set(tmp)
+
+
 # Add tf-idf to inverted index
 document_norms = {}
 N = int(list(data.keys())[-1])  # Number of documents
@@ -118,7 +133,41 @@ for doc_id in cosine_similarity:
 # Sort documents based on cosine similarity
 ranked_result = sorted(cosine_similarity.items(), key=lambda x: x[1], reverse=True)
 
-K = 5 
+K = 5
 # print(f"Top {K} documents:")
 # for i in range(K):
 
+# Calculate jaccard similarity only using inverted index
+jaccard_similarity = {}
+document_tokens = {}
+for token in query_vector:
+    for doc_id in inverted_index[token]:
+        if doc_id != "total_frequency":
+            jaccard_similarity[doc_id] = 0
+            document_tokens[doc_id] = set()
+
+            for tokens in inverted_index:
+                if doc_id in inverted_index[tokens]:
+                    document_tokens[doc_id].add(tokens)
+
+
+for doc_id in jaccard_similarity:
+    intersection_length = len(set(query).intersection(document_tokens[doc_id]))
+    union_length = len(set(query).union(document_tokens[doc_id]))
+    jaccard_similarity[doc_id] = intersection_length / union_length
+
+# Sort documents based on jaccard similarity
+ranked_result = sorted(jaccard_similarity.items(), key=lambda x: x[1], reverse=True)
+
+# # Calculate jaccard similarity using inverted index and data collection
+# jaccard_similarity2 = {}
+# for token in query_vector:
+#     for doc_id in inverted_index[token]:
+#         if doc_id != "total_frequency":
+#             if doc_id not in jaccard_similarity2:
+#                 intersection_length = len(tokens_dict[doc_id].intersection(set(query)))
+#                 union_length = len(tokens_dict[doc_id].union(set(query)))
+#                 jaccard_similarity2[doc_id] = intersection_length / union_length
+
+# # Sort documents based on jaccard similarity
+# ranked_result = sorted(jaccard_similarity2.items(), key=lambda x: x[1], reverse=True)
