@@ -99,3 +99,26 @@ total_abs = total_abs**0.5
 # Normalize the query vector
 for token in query_vector:
     query_vector[token] /= total_abs
+
+
+# Calculate cosine similarity
+cosine_similarity = {}
+for token in query_vector:
+    for doc_id in inverted_index[token]:
+        if doc_id != "total_frequency":
+            tf_idf = inverted_index[token][doc_id]["tf-idf"]
+            if doc_id not in cosine_similarity:
+                cosine_similarity[doc_id] = tf_idf * query_vector[token]
+            else:
+                cosine_similarity[doc_id] += tf_idf * query_vector[token]
+
+for doc_id in cosine_similarity:
+    cosine_similarity[doc_id] /= document_norms[doc_id] ** 0.5
+
+# Sort documents based on cosine similarity
+ranked_result = sorted(cosine_similarity.items(), key=lambda x: x[1], reverse=True)
+
+K = 5 
+# print(f"Top {K} documents:")
+# for i in range(K):
+
