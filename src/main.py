@@ -60,13 +60,12 @@ for id in data:
     tmp = normalizer.normalize(data[id]["content"])  # normalize text
     tmp = tokenizer.tokenize(tmp)  # list of tokens
 
-    tmp = [
-        token for token in tmp if token not in stopwords
-    ]  # remove stopwords
+    tmp = [token for token in tmp if token not in stopwords]  # remove stopwords
     tmp = [lemmetizer.lemmatize(token) for token in tmp]
 
     tokens_dict[id] = set(tmp)
 
+# -------------------------------------------------------------------------------------------------
 
 # Add tf-idf to inverted index
 document_norms = {}
@@ -86,6 +85,13 @@ for token in inverted_index:
             else:
                 document_norms[doc_id] += tf_idf**2
 
+# Normalize Documents vector
+for token in inverted_index:
+    for doc_id in inverted_index[token]:
+        if doc_id != "total_frequency" and doc_id != "champion_list":
+            inverted_index[token][doc_id]["tf-idf"] /= document_norms[doc_id] ** 0.5
+
+# -------------------------------------------------------------------------------------------------
 
 # Query Processing
 query = input("Enter your query: ")
@@ -115,6 +121,7 @@ total_abs = total_abs**0.5
 for token in query_vector:
     query_vector[token] /= total_abs
 
+# -------------------------------------------------------------------------------------------------
 
 # Calculate cosine similarity
 cosine_similarity = {}
@@ -137,37 +144,39 @@ K = 5
 # print(f"Top {K} documents:")
 # for i in range(K):
 
-# Calculate jaccard similarity only using inverted index
-jaccard_similarity = {}
-document_tokens = {}
+# -------------------------------------------------------------------------------------------------
+
+# Calculate jaccard similarity using inverted index and data collection
+jaccard_similarity2 = {}
 for token in query_vector:
     for doc_id in inverted_index[token]:
         if doc_id != "total_frequency":
-            jaccard_similarity[doc_id] = 0
-            document_tokens[doc_id] = set()
-
-            for tokens in inverted_index:
-                if doc_id in inverted_index[tokens]:
-                    document_tokens[doc_id].add(tokens)
-
-
-for doc_id in jaccard_similarity:
-    intersection_length = len(set(query).intersection(document_tokens[doc_id]))
-    union_length = len(set(query).union(document_tokens[doc_id]))
-    jaccard_similarity[doc_id] = intersection_length / union_length
+            if doc_id not in jaccard_similarity2:
+                intersection_length = len(tokens_dict[doc_id].intersection(set(query)))
+                union_length = len(tokens_dict[doc_id].union(set(query)))
+                jaccard_similarity2[doc_id] = intersection_length / union_length
 
 # Sort documents based on jaccard similarity
-ranked_result = sorted(jaccard_similarity.items(), key=lambda x: x[1], reverse=True)
+ranked_result = sorted(jaccard_similarity2.items(), key=lambda x: x[1], reverse=True)
 
-# # Calculate jaccard similarity using inverted index and data collection
-# jaccard_similarity2 = {}
-# for token in query_vector:
-#     for doc_id in inverted_index[token]:
-#         if doc_id != "total_frequency":
-#             if doc_id not in jaccard_similarity2:
-#                 intersection_length = len(tokens_dict[doc_id].intersection(set(query)))
-#                 union_length = len(tokens_dict[doc_id].union(set(query)))
-#                 jaccard_similarity2[doc_id] = intersection_length / union_length
 
-# # Sort documents based on jaccard similarity
-# ranked_result = sorted(jaccard_similarity2.items(), key=lambda x: x[1], reverse=True)
+# Construct champion list for each token
+champion_list = []
+for token in inverted_index:
+    tmp = sorted(
+        inverted_index[token].items(), key=lambda x: x[1]["tf-idf"], reverse=True
+    )
+    champion_list.append((token, tmp[:100]))
+
+# -------------------------------------------------------------------------------------------------
+
+# Add champion list to inverted index for each token
+r = 10
+for token in inverted_index:
+    champion_list = []
+    for doc_id in inverted_index[token]:
+        if doc_id != "total_frequency" and doc_id != "champion_list":
+            champion_list.append((doc_id, inverted_index[token][doc_id]["tf-idf"]))
+
+    champion_list = sorted(champion_list, key=lambda x: x[1], reverse=True)
+    inverted_index[token]["champion_list"] = champion_list[:r]
