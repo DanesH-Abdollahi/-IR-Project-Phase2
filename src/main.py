@@ -1,4 +1,3 @@
-# from phase1 import *
 import json
 from hazm import Normalizer, WordTokenizer, Lemmatizer, SentenceTokenizer
 from hazm.utils import stopwords_list
@@ -114,6 +113,11 @@ query = tokenizer.tokenize(query)
 query = [token for token in query if token not in stopwords]
 query = [lemmetizer.lemmatize(token) for token in query]
 
+# Remove tokens that are not in inverted index
+for token in query:
+    if token not in inverted_index:
+        query.remove(token)
+
 # Construct query vector
 query_vector = {}
 for token in query:
@@ -178,7 +182,7 @@ for id, _ in results_for_show:
             sentences[id].remove(sent)
 
 with open("Results.txt", "w") as file:
-    file.write("Cosine Similarity\n")
+    file.write("********** Results for Cosine Similarity **********\n\n")
     for id, _ in results_for_show:
         file.write(f"Document ID: {id}\n")
         file.write(f"Document Title: {data[id]['title']}\n")
@@ -229,7 +233,9 @@ for id, _ in results_for_show:
             sentences[id].remove(sent)
 
 with open("Results.txt", "a") as file:
-    file.write("Cosine Similarity with Champion List\n")
+    file.write(
+        "********** Results for Cosine Similarity with Champion List **********\n\n"
+    )
     for id, _ in results_for_show:
         file.write(f"Document ID: {id}\n")
         file.write(f"Document Title: {data[id]['title']}\n")
@@ -279,7 +285,7 @@ for id, _ in results_for_show:
             sentences[id].remove(sent)
 
 with open("Results.txt", "a") as file:
-    file.write("Jaccard Similarity\n")
+    file.write("********** Results for Jaccard Similarity **********\n\n")
     for id, _ in results_for_show:
         file.write(f"Document ID: {id}\n")
         file.write(f"Document Title: {data[id]['title']}\n")
@@ -309,7 +315,7 @@ jaccard_similarity_champion_list_results = sorted(
 # -------------------------------------------------------------------------------------------------
 
 # Write top K results for jaccard similarity with champion list in Results.txt
-results_for_show = jaccard_similarity_champion_list[:K]
+results_for_show = jaccard_similarity_champion_list_results[:K]
 sentences = dict()
 for id, _ in results_for_show:
     content = data[id]["content"]
@@ -330,7 +336,9 @@ for id, _ in results_for_show:
             sentences[id].remove(sent)
 
 with open("Results.txt", "a") as file:
-    file.write("Jaccard Similarity with Champion List\n")
+    file.write(
+        "********** Results for Jaccard Similarity with Champion List **********\n\n"
+    )
     for id, _ in results_for_show:
         file.write(f"Document ID: {id}\n")
         file.write(f"Document Title: {data[id]['title']}\n")
