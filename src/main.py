@@ -195,11 +195,17 @@ with open("Results.txt", "w") as file:
 
 # Calculate Cosine Similarity with champion list method
 cosine_similarity_champion_list = {}
+champion_list = []
 for token in query_vector:
-    for doc_id, tf_idf in inverted_index[token]["champion_list"]:
-        if doc_id not in cosine_similarity_champion_list:
-            cosine_similarity_champion_list[doc_id] = tf_idf * query_vector[token]
-        else:
+    for doc_id, _ in inverted_index[token]["champion_list"]:
+        if doc_id not in champion_list:
+            champion_list.append(doc_id)
+
+for doc_id in champion_list:
+    cosine_similarity_champion_list[doc_id] = 0
+    for token in query_vector:
+        if doc_id in inverted_index[token]:
+            tf_idf = inverted_index[token][doc_id]["tf-idf"]
             cosine_similarity_champion_list[doc_id] += tf_idf * query_vector[token]
 
 
@@ -207,6 +213,7 @@ for token in query_vector:
 cosine_similarity_champion_list_results = sorted(
     cosine_similarity_champion_list.items(), key=lambda x: x[1], reverse=True
 )
+
 
 # -------------------------------------------------------------------------------------------------
 
@@ -298,14 +305,17 @@ with open("Results.txt", "a") as file:
 
 # Calculate Jaccard Similarity with champion list method
 jaccard_similarity_champion_list = {}
+champion_list = []
 for token in query_vector:
     for doc_id, _ in inverted_index[token]["champion_list"]:
-        if doc_id not in jaccard_similarity_champion_list:
-            intersection_length = len(tokens_dict[doc_id].intersection(set(query)))
-            union_length = len(tokens_dict[doc_id].union(set(query)))
-            jaccard_similarity_champion_list[doc_id] = (
-                intersection_length / union_length
-            )
+        if doc_id not in champion_list:
+            champion_list.append(doc_id)
+
+
+for doc_id in champion_list:
+    intersection_length = len(tokens_dict[doc_id].intersection(set(query)))
+    union_length = len(tokens_dict[doc_id].union(set(query)))
+    jaccard_similarity_champion_list[doc_id] = intersection_length / union_length
 
 # Sort documents based on jaccard similarity for champion list
 jaccard_similarity_champion_list_results = sorted(
